@@ -1,5 +1,5 @@
-import React from 'react'
-import { Divider, Dropdown, Icon, Button, Container, Header } from 'semantic-ui-react'
+import React, { Component } from 'react';
+import { Divider, Dropdown, Icon, Button, Container, Header } from 'semantic-ui-react';
 
 const DropdownExampleMenuDirection = () => (
   <Dropdown floating button className='icon'>
@@ -18,75 +18,27 @@ const DropdownExampleMenuDirection = () => (
       </Dropdown.Item>
     </Dropdown.Menu>
   </Dropdown>
-)
+);
 
-const AdminContainer = () => (
-  <div>
-    <div class="ui container left aligned" style={{ marginTop: '2em', marginBottom: '2em' }}>
-      <Header as='h1'>Manage Events</Header>
+const renderEventQuestions = (event) => {
+  const { questions } = event;
 
-
-      <div class="ui menu">
-        <a class="item">New Event</a>
-        <a class="item">Manage</a>
-        <div class="right menu">
-          <a class="item">Sign Out</a>
-        </div>
-      </div>
-
-      <p>All events will be listed below</p>
-    </div>
-
-  <div class="ui left aligned container">
-  <div class="ui very relaxed list">
-
-    <div class="item row">
-      <div class="ui equal width  grid">
-        <div class="two wide column center aligned">
-          <img class="ui avatar image" src="https://semantic-ui.com/images/avatar/small/daniel.jpg" />
-        </div>
-
-        <div class="twelve wide column ">
-          <div class="content left aligned">
-            <a class="header">Daniel Lamborghini</a>
-            <div class="description">2 <i class="like outline icon"></i> - today, 11:56am</div>
-          </div>
-        </div>
-
-        <div class="two wide column left aligned">
-          <DropdownExampleMenuDirection />
-        </div>
-        <div class="fifteen wide column">
-          <div class="content">Where I can make a purchase online via cashback ?</div>
-          <Divider />
-        </div>
+  return (
+    <div class="ui left aligned container">
+      <div class="ui very relaxed list">
+        {questions && questions.map(question => renderQuestionItem(question))}
       </div>
     </div>
+  );
 
-    <div class="item">
-      <div class="ui grid">
-        <div class="two wide column center aligned">
-          <img class="ui avatar image" src="https://semantic-ui.com/images/avatar/small/stevie.jpg" />
-        </div>
+};
 
-        <div class="twelve wide column ">
-          <div class="content left aligned">
-            <a class="header">Stevie Feliciano</a>
-            <div class="description">0 <i class="like outline icon"></i> - today, 11:56am</div>
-          </div>
-        </div>
+const renderQuestionItem = (questionItem) => {
+  const { questionId, question, likes, createdDateAt, creator } = questionItem;
+  const { name } = creator;
 
-        <div class="two wide column left aligned">
-          <DropdownExampleMenuDirection />
-        </div>
-        <div class="fifteen wide column">
-          <div class="content">Are you good ?</div>
-          <Divider />
-        </div>
-      </div>
-    </div>
-
-    <div class="item">
+  return (
+    <div class="item" key={questionId}>
       <div class="ui grid">
         <div class="two wide column center aligned">
           <img class="ui avatar image" src="https://semantic-ui.com/images/avatar/small/elliot.jpg" />
@@ -94,8 +46,8 @@ const AdminContainer = () => (
 
         <div class="twelve wide column ">
           <div class="content left aligned">
-            <a class="header">Elliot Fu</a>
-            <div class="description">1 <i class="like outline icon"></i> - today, 11:56am</div>
+            <a class="header">{name}</a>
+            <div class="description">{likes.length} <i class="like outline icon"></i> - {createdDateAt}</div>
           </div>
         </div>
 
@@ -103,14 +55,67 @@ const AdminContainer = () => (
           <DropdownExampleMenuDirection />
         </div>
         <div class="fifteen wide column">
-          <div class="content">How are you doing ?</div>
+          <div class="content">{question}</div>
           <Divider />
         </div>
       </div>
     </div>
-  </div>
-  </div>
+  );
+};
+
+const renderMenu = () => {
+  return (
+    <div class="ui menu">
+      <a class="item">New Event</a>
+      <a class="item">Manage</a>
+      <div class="right menu">
+        <a class="item">Sign Out</a>
+      </div>
+    </div>
+  );
+};
+
+const renderHeader = () => (
+  <div class="ui container left aligned" style={{ marginTop: '2em', marginBottom: '2em' }}>
+  <Header as='h1'>Manage Events</Header>
+    {renderMenu()}
+    <p>All events will be listed below</p>
   </div>
 );
 
-export default AdminContainer
+class AdminContainer extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      event: { },
+      eventCode: 'CB002'
+    }
+  }
+
+  componentDidMount() {
+    const { eventCode } = this.state;
+    const url = `http://localhost:5000/api/events/${eventCode}`;
+    return fetch(url)
+      .then((response) => response.json())
+      .then((event) => {
+        this.setState({ event });
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
+
+  render() {
+    const { event } = this.state;
+    console.log(event);
+
+    return (
+      <div>
+        {renderHeader()}
+        {renderEventQuestions(event)}
+      </div>
+    );
+  }
+}
+
+export default AdminContainer;
