@@ -1,7 +1,9 @@
 import React from 'react'
+import { withRouter } from 'react-router-dom'
+
 import { Button, Form, Grid, Header, Image, Message, Segment } from 'semantic-ui-react'
 
-const LoginContainer = () => (
+const LoginContainer = withRouter(( { history }) => (
   <div className='login-form'>
     {/*
       Heads up! The styles below are necessary for the correct render of this example.
@@ -41,12 +43,12 @@ const LoginContainer = () => (
               type='password'
             />
 
-            <Button color='teal' fluid size='large'>Login</Button>
+            <Button color='teal' fluid size='large' onClick={() => { history.push('./manage') }}>Login</Button>
           </Segment>
         </Form>
       </Grid.Column>
     </Grid>
   </div>
-);
+));
 
 export default LoginContainer
