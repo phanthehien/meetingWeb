@@ -1,54 +1,96 @@
-import React from 'react'
+import React, { Component } from 'react';
 import { withRouter } from 'react-router-dom'
-
 import { Button, Form, Grid, Header, Image, Message, Segment } from 'semantic-ui-react'
 
-const LoginContainer = withRouter(( { history }) => (
-  <div className='login-form'>
-    {/*
-      Heads up! The styles below are necessary for the correct render of this example.
-      You can do same with CSS, the main idea is that all the elements up to the `Grid`
-      below must have a height of 100%.
-    */}
-    <style>{`
-      body > div,
-      body > div > div,
-      body > div > div > div.login-form {
-        height: 100%;
-      }
-    `}</style>
-    <Grid
-      textAlign='center'
-      style={{ height: '100%' }}
-      verticalAlign='middle'
-    >
-      <Grid.Column style={{ maxWidth: 450 }}>
-        <Header as='h2' color='teal' textAlign='center'>
-          <Image src='/logo.png' />
-          {' '}Log-in to Admin page
-        </Header>
-        <Form size='large'>
-          <Segment stacked>
-            <Form.Input
-              fluid
-              icon='user'
-              iconPosition='left'
-              placeholder='Username'
-            />
-            <Form.Input
-              fluid
-              icon='lock'
-              iconPosition='left'
-              placeholder='Password'
-              type='password'
-            />
+const MessageExampleNegative = ({ err = false }) => (
+  err ? <Message negative>
+    <Message.Header>Your username is not correct</Message.Header>
+    <p>Please check again </p>
+  </Message> : null
+);
 
-            <Button color='teal' fluid size='large' onClick={() => { history.push('./manage') }}>Login</Button>
-          </Segment>
-        </Form>
-      </Grid.Column>
-    </Grid>
-  </div>
-));
+class LoginContainer extends Component {
 
-export default LoginContainer
+  state = { eventName: '', startDate: '', endDate: '', code: '' };
+
+  _handleChange = (e, params) => {
+    const { name, value } = params;
+    this.setState({ [name]: value });
+  };
+
+  _handleSubmit = (e) => {
+    const { history } = this.props;
+
+    e.preventDefault();
+    const { username, password } = this.state;
+
+    const authentication = {
+      username,
+      password
+    };
+    this.setState({ ['hasError']: false });
+    fetch('http://localhost:5000/api/login', {
+      method: 'post',
+      body: JSON.stringify(authentication)
+    }).then(response => {
+        if (response.status >= 200 && response.status < 300) {
+          return response.json()
+        }
+        this.setState({ ['hasError']: true });
+      })
+      .then(user => {
+        console.log('There is response', user);
+        if (user) {
+          history.push('./manage');
+        }
+      });
+  };
+
+  render() {
+    const { history } = this.props;
+    const { username, password, hasError } = this.state;
+    return (
+      <div className='login-form'>
+        <Grid
+          textAlign='center'
+          style={{ height: '100%', marginTop: '5%' }}
+          verticalAlign='middle'
+        >
+          <Grid.Column style={{ maxWidth: 450 }}>
+            <Header as='h2' color='teal' textAlign='center'>
+              Log-in to Admin page
+            </Header>
+            <Form size='large'>
+              <Segment stacked>
+                <Form.Input
+                  fluid
+                  icon='user'
+                  iconPosition='left'
+                  placeholder='Username'
+                  name='username'
+                  value={username}
+                  onChange={this._handleChange}
+                />
+                <Form.Input
+                  fluid
+                  icon='lock'
+                  iconPosition='left'
+                  placeholder='Password'
+                  type='password'
+                  name='password'
+                  value={password}
+                  onChange={this._handleChange}
+                />
+
+                <Button color='teal' fluid size='large' onClick={this._handleSubmit}>Login</Button>
+                <MessageExampleNegative err={hasError} />
+              </Segment>
+            </Form>
+          </Grid.Column>
+        </Grid>
+      </div>
+    );
+  }
+}
+
+export default withRouter(LoginContainer)

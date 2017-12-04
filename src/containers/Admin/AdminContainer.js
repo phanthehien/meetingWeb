@@ -1,61 +1,137 @@
 import React, { Component } from 'react';
 import { Divider, Dropdown, Icon, Button, Container, Header } from 'semantic-ui-react';
+import HeaderComponent from '../../components/HeaderComponent';
 
-const DropdownExampleMenuDirection = () => (
+const editQuestion = (eventCode, questionId, refreshFn) => {
+  alert('you want to edit question', eventCode, questionId);
+};
+
+const deleteQuestion = (eventCode, questionId, refreshFn) => {
+  fetch(`http://localhost:5000/api/events/${eventCode}/question/${questionId}`, {
+    credentials: 'include',
+    method: 'DELETE'
+  }).then(response => {
+    console.log('There is response', response);
+    if (response.status >= 200 && response.status < 300) {
+      refreshFn();
+      return response.json()
+    }
+    alert('There is error', response);
+  }).then(data => {
+    console.log('There is data', data);
+  });
+};
+
+
+const markEventQuestion = (eventCode, questionId, refreshFn) => {
+  fetch(`http://localhost:5000/api/events/${eventCode}/question/${questionId}/highlight`, {
+    credentials: 'include',
+    method: 'PATCH'
+  }).then(response => {
+    console.log('There is response', response);
+    if (response.status >= 200 && response.status < 300) {
+      refreshFn();
+      return response.json()
+    }
+    alert('There is error', response);
+  }).then(data => {
+    console.log('There is data', data);
+  });
+};
+const DropdownExampleMenuDirection = ({ eventCode, questionId, refreshFn }) => (
   <Dropdown floating button className='icon'>
     <Dropdown.Menu>
       <Dropdown.Item>
-        <Icon name='star' />
-        <span className='text'>Mark as good</span>
+        <div  onClick={() => markEventQuestion(eventCode, questionId, refreshFn)}>
+          <Icon name='star' />
+          <span className='text'>Mark as good</span>
+        </div>
       </Dropdown.Item>
       <Dropdown.Item>
+        <div  onClick={() => editQuestion(eventCode, questionId, refreshFn)}>
+
         <Icon name='edit' />
+
         <span className='text'>Edit</span>
+        </div>
       </Dropdown.Item>
       <Dropdown.Item>
+        <div  onClick={() => deleteQuestion(eventCode, questionId, refreshFn)}>
+
         <Icon name='trash' />
         <span className='text'>Delete</span>
+        </div>
       </Dropdown.Item>
     </Dropdown.Menu>
   </Dropdown>
 );
 
-const renderEventQuestions = (event) => {
-  const { questions } = event;
+const renderEvents = (events, refreshFn) => {
+  return events && events.map(event => renderEventQuestions(event, refreshFn));
+};
+
+const renderEventQuestions = (event, refreshFn) => {
+  const { questions, name, code, good } = event;
 
   return (
-    <div class="ui left aligned container">
-      <div class="ui very relaxed list">
-        {questions && questions.map(question => renderQuestionItem(question))}
+    <div className="ui left aligned container">
+      <Header
+        dividing
+        block
+        as='h2'>
+        <Icon name='idea' />
+        <Header.Content>
+          [{code}] - {name}
+        </Header.Content>
+      </Header>
+      <div className="ui very relaxed list">
+        {questions && questions.map(question => renderQuestionItem(
+          {
+            questionItem: question,
+            eventCode: code,
+            refreshFn,
+            good
+          }))}
       </div>
     </div>
   );
 
 };
 
-const renderQuestionItem = (questionItem) => {
+const renderQuestionItem = ({ questionItem, eventCode, refreshFn, good=[] }) => {
   const { questionId, question, likes, createdDateAt, creator } = questionItem;
   const { name } = creator;
 
   return (
-    <div class="item" key={questionId}>
-      <div class="ui grid">
-        <div class="two wide column center aligned">
-          <img class="ui avatar image" src="https://semantic-ui.com/images/avatar/small/elliot.jpg" />
+    <div className="item" key={questionId}>
+      <div className="ui grid">
+        <div className="two wide column center aligned">
+          <img className="ui avatar image" src="https://semantic-ui.com/images/avatar/small/elliot.jpg" />
         </div>
 
-        <div class="twelve wide column ">
-          <div class="content left aligned">
-            <a class="header">{name}</a>
-            <div class="description">{likes.length} <i class="like outline icon"></i> - {createdDateAt}</div>
+        <div className="twelve wide column ">
+          <div className="content left aligned">
+            <a className="header">
+              {name}&nbsp;
+              {
+                good.indexOf(questionId) > -1 ?
+                  <a className="ui green horizontal label"> Good </a>:
+                  null
+              }
+            </a>
+            <div className="description">{likes.length} <i className="like outline icon"></i> - {createdDateAt}</div>
           </div>
         </div>
 
-        <div class="two wide column left aligned">
-          <DropdownExampleMenuDirection />
+        <div className="two wide column left aligned">
+          <DropdownExampleMenuDirection
+            eventCode={eventCode}
+            questionId={questionId}
+            refreshFn={refreshFn}
+          />
         </div>
-        <div class="fifteen wide column">
-          <div class="content">{question}</div>
+        <div className="fifteen wide column">
+          <div className="content">{question}</div>
           <Divider />
         </div>
       </div>
@@ -63,56 +139,36 @@ const renderQuestionItem = (questionItem) => {
   );
 };
 
-const renderMenu = () => {
-  return (
-    <div class="ui menu">
-      <a class="item">New Event</a>
-      <a class="item">Manage</a>
-      <div class="right menu">
-        <a class="item">Sign Out</a>
-      </div>
-    </div>
-  );
-};
-
-const renderHeader = () => (
-  <div class="ui container left aligned" style={{ marginTop: '2em', marginBottom: '2em' }}>
-  <Header as='h1'>Manage Events</Header>
-    {renderMenu()}
-    <p>All events will be listed below</p>
-  </div>
-);
-
 class AdminContainer extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      event: { },
-      eventCode: 'CB002'
+      events: []
     }
   }
 
-  componentDidMount() {
-    const { eventCode } = this.state;
-    const url = `http://localhost:5000/api/events/${eventCode}`;
+  _reloadPage = () => {
+    const url = `http://localhost:5000/api/events`;
     return fetch(url)
       .then((response) => response.json())
-      .then((event) => {
-        this.setState({ event });
+      .then((events) => {
+        this.setState({ events });
       })
       .catch((error) => {
         console.error(error);
       });
+  };
+
+  componentDidMount() {
+    this._reloadPage();
   }
 
   render() {
-    const { event } = this.state;
-    console.log(event);
-
+    const { events } = this.state;
     return (
       <div>
-        {renderHeader()}
-        {renderEventQuestions(event)}
+        <HeaderComponent title={'Manage events'} description={'Event list is shown below'} />
+        {renderEvents(events.reverse(), this._reloadPage)}
       </div>
     );
   }
