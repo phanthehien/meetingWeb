@@ -3,10 +3,18 @@ import { Header } from 'semantic-ui-react';
 import { withRouter } from 'react-router-dom'
 
 const MenuComponent = (props) => {
+  const { hasNew = true, hasManage = true } = props;
   return (
     <div className="ui menu">
-      <a className="item" onClick={() => { props.history.replace('./create') }}>New Event</a>
-      <a className="item" onClick={() => { props.history.replace('./manage') }}>Manage</a>
+      { hasNew && <a className="item" onClick={() => { props.history.replace('./create') }}>New Event</a>}
+      { hasManage && <a className="item" onClick={() => { props.history.replace('./manage') }}>Manage</a>}
+      { !hasNew && !hasManage &&
+        <a
+          className="item"
+          onClick={() => { props.history.replace('./room') }}
+        >
+          Room
+        </a>}
       <div className="right menu">
         <a className="item" onClick={() => { props.history.replace('./login') }}>Sign Out</a>
       </div>

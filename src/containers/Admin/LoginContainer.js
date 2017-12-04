@@ -1,13 +1,7 @@
 import React, { Component } from 'react';
 import { withRouter } from 'react-router-dom'
 import { Button, Form, Grid, Header, Image, Message, Segment } from 'semantic-ui-react'
-
-const MessageExampleNegative = ({ err = false }) => (
-  err ? <Message negative>
-    <Message.Header>Your username is not correct</Message.Header>
-    <p>Please check again </p>
-  </Message> : null
-);
+import MessageExampleNegative from '../../components/MessageComponent'
 
 class LoginContainer extends Component {
 
